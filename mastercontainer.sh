@@ -6,6 +6,7 @@ docker pull ubuntu
 # Set environment variables
 MYSQL_PASSWORD=secret
 FQDN=example.com
+EMAIL=emailmanish84@gmail.com
 
 # Create the Docker container
 docker run -d --name nginx-mysql-modsecurity-letsencrypt-phpmyadmin \
@@ -25,10 +26,16 @@ docker run -d --name nginx-mysql-modsecurity-letsencrypt-phpmyadmin \
     # Modify the Nginx default configuration file
     sed -i "s/.*listen.*/listen 80;/" /etc/nginx/conf.d/default.conf && \
     sed -i "s/.*server_name.*/server_name $FQDN;/" /etc/nginx/conf.d/default.conf && \
-    certbot --nginx -d $FQDN
     
+    # Obtain a Let's Encrypt SSL certificate for the specified domain
+certbot --nginx -d $FQDN --email $EMAIL
+   
     # Configure phpMyAdmin
-    ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
+rm -rf /var/www/html/phpmyadmin && \
+ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin && \
+sed -i "s/.*listen.*/listen 80;/" /etc/phpmyadmin/apache.conf && \
+sed -i "s/.*server_name.*/server_name $FQDN;/" /etc/phpmyadmin/apache.conf
+
     
     # Create the phpMyAdmin Apache configuration file if it doesn't exist
     if [ ! -f /etc/phpmyadmin/apache.conf ]; then
